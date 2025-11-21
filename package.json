@@ -4,11 +4,16 @@
   "version": "1.0.0",
   "description": "Hey",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/app.js",
   "exports": {
-    ".": "./src/index.ts",
-    "./types": "./src/types.ts",
-    "./react/useApp": "./src/react/useApp.tsx"
+    ".": {
+      "types": "./dist/app.d.ts",
+      "default": "./dist/app.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    }
   },
   "scripts": {
     "start:example-server0": "tsx examples/example-server.ts",
