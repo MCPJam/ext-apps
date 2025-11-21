@@ -1044,17 +1044,20 @@ Hosts MUST enforce Content Security Policies based on resource metadata.
 
 **CSP Construction from Metadata:**
 
-```yaml
-Content-Security-Policy:
+```typescript
+const csp = resource._meta?.ui?.csp;
+
+const cspValue = `
   default-src 'none';
   script-src 'self' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
-  connect-src 'self' ${csp.connect_domains?.join(' ') || ''};
-  img-src 'self' data: ${csp.resource_domains?.join(' ') || ''};
-  font-src 'self' ${csp.resource_domains?.join(' ') || ''};
+  connect-src 'self' ${csp?.connect_domains?.join(' ') || ''};
+  img-src 'self' data: ${csp?.resource_domains?.join(' ') || ''};
+  font-src 'self' ${csp?.resource_domains?.join(' ') || ''};
   frame-src 'none';
   object-src 'none';
   base-uri 'self';
+`;
 ```
 
 **Security Requirements:**
