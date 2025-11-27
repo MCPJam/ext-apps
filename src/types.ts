@@ -7,7 +7,7 @@ import {
   RequestSchema,
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export const LATEST_PROTOCOL_VERSION = "2025-11-21";
 
@@ -77,7 +77,7 @@ export type McpUiSizeChangeNotification = z.infer<
 export const McpUiToolInputNotificationSchema = z.object({
   method: z.literal("ui/notifications/tool-input"),
   params: z.object({
-    arguments: z.record(z.unknown()).optional(),
+    arguments: z.record(z.string(), z.unknown()).optional(),
   }),
 });
 export type McpUiToolInputNotification = z.infer<
@@ -87,7 +87,7 @@ export type McpUiToolInputNotification = z.infer<
 export const McpUiToolInputPartialNotificationSchema = z.object({
   method: z.literal("ui/notifications/tool-input-partial"),
   params: z.object({
-    arguments: z.record(z.unknown()).optional(),
+    arguments: z.record(z.string(), z.unknown()).optional(),
   }),
 });
 export type McpUiToolInputPartialNotification = z.infer<
