@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolResult,
@@ -57,6 +58,7 @@ const getServer = async () => {
   };
 
   {
+    // Tool 1: UI widget tool - loads the interactive UI
     const randomDogResource = registerResource(
       {
         name: "random-dog-template",
@@ -69,20 +71,72 @@ const getServer = async () => {
     );
 
     server.registerTool(
-      "get-random-dog",
+      "show-random-dog-ui",
       {
-        title: "Random Dog",
-        description: "A tool that returns a random dog",
+        title: "Show Random Dog UI",
+        description: "Loads an interactive UI widget for browsing random dog images",
         _meta: {
           [RESOURCE_URI_META_KEY]: randomDogResource.uri,
         },
       },
       async (): Promise<CallToolResult> => ({
         content: [
-          { type: "text", text: JSON.stringify({ message: "Random dog" }) },
+          { type: "text", text: JSON.stringify({ message: "Random dog UI loaded" }) },
         ],
-        structuredContent: { message: "Random dog" },
+        structuredContent: { message: "Random dog UI loaded" },
       }),
+    );
+  }
+
+  {
+    // Tool 2: Standalone dog image fetcher - no UI, just returns the image data
+    server.registerTool(
+      "get-dog-image",
+      {
+        title: "Get Dog Image",
+        description: "Get a random dog image or a random image from a specific breed. Returns the image URL and metadata.",
+        inputSchema: {
+          breed: z.string().optional().describe("Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed."),
+        },
+      },
+      async ({ breed }): Promise<CallToolResult> => {
+        try {
+          let apiUrl: string;
+          if (breed) {
+            // Get random image from specific breed
+            apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random`;
+          } else {
+            // Get completely random dog image
+            apiUrl = "https://dog.ceo/api/breeds/image/random";
+          }
+
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+
+          if (data.status === "success" && data.message) {
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(data) },
+              ],
+              structuredContent: data,
+            };
+          } else {
+            return {
+              content: [
+                { type: "text", text: JSON.stringify({ error: "Failed to fetch dog image", status: data.status }) },
+              ],
+              isError: true,
+            };
+          }
+        } catch (error) {
+          return {
+            content: [
+              { type: "text", text: JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }) },
+            ],
+            isError: true,
+          };
+        }
+      },
     );
   }
 
