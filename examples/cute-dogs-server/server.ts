@@ -37,7 +37,7 @@ const getServer = async () => {
   );
 
   // Load HTML for both UIs
-  const [randomDogHtml] = await Promise.all([loadHtml("random-dog")]);
+  const [showDogImageHtml] = await Promise.all([loadHtml("show-dog-image")]);
 
   const registerResource = (resource: Resource, htmlContent: string) => {
     server.registerResource(
@@ -58,48 +58,23 @@ const getServer = async () => {
   };
 
   {
-    // Tool 1: UI widget tool - loads the interactive UI
     const randomDogResource = registerResource(
       {
-        name: "random-dog-template",
-        uri: "ui://random-dog",
-        title: "Random Dog Template",
-        description: "A random dog UI",
+        name: "show-dog-image-template",
+        uri: "ui://show-dog-image",
+        title: "Show Dog Image Template",
+        description: "A show dog image UI",
         mimeType: "text/html+mcp",
       },
-      randomDogHtml,
+      showDogImageHtml,
     );
 
     server.registerTool(
-      "show-random-dog-ui",
+      "show-dog-image",
       {
-        title: "Show Random Dog UI",
+        title: "Show Dog Image",
         description:
-          "Loads an interactive UI widget for browsing random dog images",
-        _meta: {
-          [RESOURCE_URI_META_KEY]: randomDogResource.uri,
-        },
-      },
-      async (): Promise<CallToolResult> => ({
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ message: "Random dog UI loaded" }),
-          },
-        ],
-        structuredContent: { message: "Random dog UI loaded" },
-      }),
-    );
-  }
-
-  {
-    // Tool 2: Standalone dog image fetcher - no UI, just returns the image data
-    server.registerTool(
-      "get-dog-image",
-      {
-        title: "Get Dog Image",
-        description:
-          "Get a random dog image or a random image from a specific breed. Returns the image URL and metadata.",
+          "Show a dog image in an interactive UI widget.",
         inputSchema: {
           breed: z
             .string()
@@ -107,6 +82,9 @@ const getServer = async () => {
             .describe(
               "Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed.",
             ),
+        },
+        _meta: {
+          [RESOURCE_URI_META_KEY]: randomDogResource.uri,
         },
       },
       async ({ breed }): Promise<CallToolResult> => {
@@ -122,11 +100,12 @@ const getServer = async () => {
 
           const response = await fetch(apiUrl);
           const data = await response.json();
+          const dogBreed = data.message.split("/")[4];
 
           if (data.status === "success" && data.message) {
             return {
               content: [{ type: "text", text: JSON.stringify(data) }],
-              structuredContent: data,
+              structuredContent: {...data, breed: dogBreed},
             };
           } else {
             return {
