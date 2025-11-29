@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
-import { z } from "zod";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolResult,
@@ -30,17 +29,15 @@ const loadHtml = async (name: string) => {
 const getServer = async () => {
   const server = new McpServer(
     {
-      name: "simple-mcp-server",
+      name: "cute-dogs-mcp-server",
       version: "1.0.0",
     },
     { capabilities: { logging: {} } },
   );
 
   // Load HTML for both UIs
-  const [rawHtml, vanillaHtml, reactHtml] = await Promise.all([
-    loadHtml("ui-raw"),
-    loadHtml("ui-vanilla"),
-    loadHtml("ui-react"),
+  const [randomDogHtml] = await Promise.all([
+    loadHtml("random-dog"),
   ]);
 
   const registerResource = (resource: Resource, htmlContent: string) => {
@@ -62,122 +59,32 @@ const getServer = async () => {
   };
 
   {
-    const rawResource = registerResource(
+    const randomDogResource = registerResource(
       {
-        name: "ui-raw-template",
-        uri: "ui://raw",
-        title: "Raw UI Template",
-        description: "A simple raw HTML UI",
+        name: "random-dog-template",
+        uri: "ui://random-dog",
+        title: "Random Dog Template",
+        description: "A random dog UI",
         mimeType: "text/html+mcp",
       },
-      rawHtml,
+      randomDogHtml,
     );
 
     server.registerTool(
-      "create-ui-raw",
+      "get-random-dog",
       {
-        title: "Raw UI",
-        description: "A tool that returns a raw HTML UI (no Apps SDK runtime)",
-        inputSchema: {
-          message: z.string().describe("Message to display"),
-        },
+        title: "Random Dog",
+        description: "A tool that returns a random dog",
         _meta: {
-          [RESOURCE_URI_META_KEY]: rawResource.uri,
+          [RESOURCE_URI_META_KEY]: randomDogResource.uri,
         },
       },
-      async ({ message }): Promise<CallToolResult> => ({
-        content: [{ type: "text", text: JSON.stringify({ message }) }],
-        structuredContent: { message },
+      async (): Promise<CallToolResult> => ({
+        content: [{ type: "text", text: JSON.stringify({ message: "Random dog" }) }],
+        structuredContent: { message: "Random dog" },
       }),
     );
   }
-
-  {
-    const vanillaResource = registerResource(
-      {
-        name: "ui-vanilla-template",
-        uri: "ui://vanilla",
-        title: "Vanilla UI Template",
-        description: "A simple vanilla JS UI",
-        mimeType: "text/html+mcp",
-      },
-      vanillaHtml,
-    );
-
-    server.registerTool(
-      "create-ui-vanilla",
-      {
-        title: "Vanilla UI",
-        description: "A tool that returns a vanilla TS + Apps SDK UI",
-        inputSchema: {
-          message: z.string().describe("Message to display"),
-        },
-        _meta: {
-          [RESOURCE_URI_META_KEY]: vanillaResource.uri,
-        },
-      },
-      async ({ message }): Promise<CallToolResult> => ({
-        content: [{ type: "text", text: JSON.stringify({ message }) }],
-        structuredContent: { message },
-      }),
-    );
-  }
-
-  {
-    const reactResource = registerResource(
-      {
-        name: "ui-react-template",
-        uri: "ui://react",
-        title: "React UI Template",
-        description: "A React-based UI",
-        mimeType: "text/html+mcp",
-      },
-      reactHtml,
-    );
-
-    server.registerTool(
-      "create-ui-react",
-      {
-        title: "React UI",
-        description: "A tool that returns a React-based UI",
-        inputSchema: {
-          message: z.string().describe("Message to display"),
-        },
-        _meta: {
-          [RESOURCE_URI_META_KEY]: reactResource.uri,
-        },
-      },
-      async ({ message }): Promise<CallToolResult> => ({
-        content: [{ type: "text", text: JSON.stringify({ message }) }],
-        structuredContent: { message },
-      }),
-    );
-  }
-
-  // --- Common tool: get-weather ---
-  server.registerTool(
-    "get-weather",
-    {
-      title: "Get Weather",
-      description: "Returns current weather for a location",
-      inputSchema: {
-        location: z.string().describe("Location to get weather for"),
-      },
-    },
-    async ({ location }): Promise<CallToolResult> => {
-      const temperature = 25;
-      const condition = "sunny";
-      return {
-        content: [
-          {
-            type: "text",
-            text: `The weather in ${location} is ${condition}, ${temperature}°C.`,
-          },
-        ],
-        structuredContent: { temperature, condition },
-      };
-    },
-  );
 
   return server;
 };
