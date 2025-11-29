@@ -74,14 +74,18 @@ const getServer = async () => {
       "show-random-dog-ui",
       {
         title: "Show Random Dog UI",
-        description: "Loads an interactive UI widget for browsing random dog images",
+        description:
+          "Loads an interactive UI widget for browsing random dog images",
         _meta: {
           [RESOURCE_URI_META_KEY]: randomDogResource.uri,
         },
       },
       async (): Promise<CallToolResult> => ({
         content: [
-          { type: "text", text: JSON.stringify({ message: "Random dog UI loaded" }) },
+          {
+            type: "text",
+            text: JSON.stringify({ message: "Random dog UI loaded" }),
+          },
         ],
         structuredContent: { message: "Random dog UI loaded" },
       }),
@@ -94,9 +98,15 @@ const getServer = async () => {
       "get-dog-image",
       {
         title: "Get Dog Image",
-        description: "Get a random dog image or a random image from a specific breed. Returns the image URL and metadata.",
+        description:
+          "Get a random dog image or a random image from a specific breed. Returns the image URL and metadata.",
         inputSchema: {
-          breed: z.string().optional().describe("Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed."),
+          breed: z
+            .string()
+            .optional()
+            .describe(
+              "Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed.",
+            ),
         },
       },
       async ({ breed }): Promise<CallToolResult> => {
@@ -115,15 +125,19 @@ const getServer = async () => {
 
           if (data.status === "success" && data.message) {
             return {
-              content: [
-                { type: "text", text: JSON.stringify(data) },
-              ],
+              content: [{ type: "text", text: JSON.stringify(data) }],
               structuredContent: data,
             };
           } else {
             return {
               content: [
-                { type: "text", text: JSON.stringify({ error: "Failed to fetch dog image", status: data.status }) },
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    error: "Failed to fetch dog image",
+                    status: data.status,
+                  }),
+                },
               ],
               isError: true,
             };
@@ -131,7 +145,13 @@ const getServer = async () => {
         } catch (error) {
           return {
             content: [
-              { type: "text", text: JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }) },
+              {
+                type: "text",
+                text: JSON.stringify({
+                  error:
+                    error instanceof Error ? error.message : "Unknown error",
+                }),
+              },
             ],
             isError: true,
           };

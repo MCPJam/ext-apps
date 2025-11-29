@@ -22,49 +22,59 @@ export function RandomDogApp() {
   const [error, setError] = useState<string | null>(null);
   const [breed, setBreed] = useState<string>("");
 
-  const { app, isConnected, error: appError } = useApp({
+  const {
+    app,
+    isConnected,
+    error: appError,
+  } = useApp({
     appInfo: APP_INFO,
     capabilities: {},
   });
 
-  const fetchDog = useCallback(async (breedParam?: string) => {
-    if (!app || !isConnected) return;
+  const fetchDog = useCallback(
+    async (breedParam?: string) => {
+      if (!app || !isConnected) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await app.callServerTool({
-        name: "get-dog-image",
-        arguments: breedParam ? { breed: breedParam } : {},
-      });
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await app.callServerTool({
+          name: "get-dog-image",
+          arguments: breedParam ? { breed: breedParam } : {},
+        });
 
-      if (result.isError) {
-        setError("Failed to fetch dog image");
-        return;
-      }
-
-      // Extract the message from structuredContent or content
-      let data: DogApiResponse | null = null;
-      if (result.structuredContent && typeof result.structuredContent === "object") {
-        data = result.structuredContent as unknown as DogApiResponse;
-      } else if (result.content && result.content.length > 0) {
-        const textContent = result.content.find((c) => c.type === "text");
-        if (textContent && typeof textContent.text === "string") {
-          data = JSON.parse(textContent.text) as DogApiResponse;
+        if (result.isError) {
+          setError("Failed to fetch dog image");
+          return;
         }
-      }
 
-      if (data && data.status === "success" && data.message) {
-        setDogImageUrl(data.message);
-      } else {
-        setError("Failed to fetch dog image");
+        // Extract the message from structuredContent or content
+        let data: DogApiResponse | null = null;
+        if (
+          result.structuredContent &&
+          typeof result.structuredContent === "object"
+        ) {
+          data = result.structuredContent as unknown as DogApiResponse;
+        } else if (result.content && result.content.length > 0) {
+          const textContent = result.content.find((c) => c.type === "text");
+          if (textContent && typeof textContent.text === "string") {
+            data = JSON.parse(textContent.text) as DogApiResponse;
+          }
+        }
+
+        if (data && data.status === "success" && data.message) {
+          setDogImageUrl(data.message);
+        } else {
+          setError("Failed to fetch dog image");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to fetch dog image");
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to fetch dog image");
-    } finally {
-      setLoading(false);
-    }
-  }, [app, isConnected]);
+    },
+    [app, isConnected],
+  );
 
   useEffect(() => {
     if (isConnected && app) {
@@ -89,7 +99,9 @@ export function RandomDogApp() {
       <h1>Random Dog</h1>
 
       <div style={{ marginBottom: "20px" }}>
-        <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>
+        <label
+          style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}
+        >
           Breed (optional):
         </label>
         <input
@@ -119,7 +131,11 @@ export function RandomDogApp() {
             borderRadius: "4px",
           }}
         >
-          {loading ? "Loading..." : breed.trim() ? `Get ${breed} Dog` : "Get Random Dog"}
+          {loading
+            ? "Loading..."
+            : breed.trim()
+              ? `Get ${breed} Dog`
+              : "Get Random Dog"}
         </button>
       </div>
 
