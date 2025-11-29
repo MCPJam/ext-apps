@@ -36,9 +36,7 @@ const getServer = async () => {
   );
 
   // Load HTML for both UIs
-  const [randomDogHtml] = await Promise.all([
-    loadHtml("random-dog"),
-  ]);
+  const [randomDogHtml] = await Promise.all([loadHtml("random-dog")]);
 
   const registerResource = (resource: Resource, htmlContent: string) => {
     server.registerResource(
@@ -80,7 +78,9 @@ const getServer = async () => {
         },
       },
       async (): Promise<CallToolResult> => ({
-        content: [{ type: "text", text: JSON.stringify({ message: "Random dog" }) }],
+        content: [
+          { type: "text", text: JSON.stringify({ message: "Random dog" }) },
+        ],
         structuredContent: { message: "Random dog" },
       }),
     );

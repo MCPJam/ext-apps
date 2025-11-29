@@ -20,7 +20,7 @@ export function RandomDogApp() {
     try {
       const response = await fetch("https://dog.ceo/api/breeds/image/random");
       const data: DogApiResponse = await response.json();
-      
+
       if (data.status === "success" && data.message) {
         setDogImageUrl(data.message);
       } else {
@@ -59,9 +59,7 @@ export function RandomDogApp() {
       </button>
 
       {error && (
-        <div style={{ color: "red", marginBottom: "20px" }}>
-          Error: {error}
-        </div>
+        <div style={{ color: "red", marginBottom: "20px" }}>Error: {error}</div>
       )}
 
       {dogImageUrl && (
