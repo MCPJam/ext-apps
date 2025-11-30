@@ -52,7 +52,6 @@ export function ShowAllBreedsApp() {
     [app],
   );
 
-
   return (
     <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
       <h1>All Dog Breeds</h1>
@@ -87,34 +86,34 @@ export function ShowAllBreedsApp() {
           }}
         >
           {breeds.map((breed) => (
-          <button
-            key={breed}
-            onClick={() => handleBreedClick(breed)}
-            style={{
-              padding: "12px 16px",
-              fontSize: "14px",
-              cursor: "pointer",
-              backgroundColor:
-                selectedBreed === breed ? "#1976d2" : "#f5f5f5",
-              color: selectedBreed === breed ? "white" : "#333",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              textTransform: "capitalize",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (selectedBreed !== breed) {
-                e.currentTarget.style.backgroundColor = "#e0e0e0";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedBreed !== breed) {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
-              }
-            }}
-          >
-            {breed}
-          </button>
+            <button
+              key={breed}
+              onClick={() => handleBreedClick(breed)}
+              style={{
+                padding: "12px 16px",
+                fontSize: "14px",
+                cursor: "pointer",
+                backgroundColor:
+                  selectedBreed === breed ? "#1976d2" : "#f5f5f5",
+                color: selectedBreed === breed ? "white" : "#333",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                textTransform: "capitalize",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (selectedBreed !== breed) {
+                  e.currentTarget.style.backgroundColor = "#e0e0e0";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedBreed !== breed) {
+                  e.currentTarget.style.backgroundColor = "#f5f5f5";
+                }
+              }}
+            >
+              {breed}
+            </button>
           ))}
         </div>
       )}

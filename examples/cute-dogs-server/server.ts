@@ -37,7 +37,10 @@ const getServer = async () => {
   );
 
   // Load HTML for both UIs
-  const [showDogImageHtml, showAllBreedsHtml] = await Promise.all([loadHtml("show-dog-image"), loadHtml("show-all-breeds")]);
+  const [showDogImageHtml, showAllBreedsHtml] = await Promise.all([
+    loadHtml("show-dog-image"),
+    loadHtml("show-all-breeds"),
+  ]);
 
   const registerResource = (resource: Resource, htmlContent: string) => {
     server.registerResource(
@@ -136,8 +139,7 @@ const getServer = async () => {
             {
               type: "text",
               text: JSON.stringify({
-                error:
-                  error instanceof Error ? error.message : "Unknown error",
+                error: error instanceof Error ? error.message : "Unknown error",
               }),
             },
           ],
