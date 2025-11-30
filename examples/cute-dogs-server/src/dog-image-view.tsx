@@ -115,7 +115,9 @@ export function DogImageViewApp() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl capitalize">{dogBreed}</CardTitle>
+                  <CardTitle className="text-xl capitalize">
+                    {dogBreed}
+                  </CardTitle>
                   <Button
                     onClick={openDogBreedLink}
                     variant="outline"
