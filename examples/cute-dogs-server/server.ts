@@ -38,14 +38,14 @@ const getServer = async () => {
     {
       capabilities: { logging: {} },
       instructions:
-        "This server shows images of dogs. View all dog breeds with the `show-all-breeds` tool and widget. The show-dog-image tool and widget shows the image. The show-dog-image widget can call the `get-more-images` tool to get more images of the same breed.",
+        "This server shows images of dogs. View all dog breeds with the `all-breeds-view` tool and widget. The dog-image-view tool and widget shows the image. The dog-image-view widget can call the `get-more-images` tool to get more images of the same breed.",
     },
   );
 
   // Load HTML files
   const [showDogImageHtml, showAllBreedsHtml] = await Promise.all([
-    loadHtml("show-dog-image"),
-    loadHtml("show-all-breeds"),
+    loadHtml("dog-image-view"),
+    loadHtml("all-breeds-view"),
   ]);
 
   // Register resources
@@ -64,8 +64,8 @@ const getServer = async () => {
   const showAllBreedsResource = registerResource(
     server,
     {
-      name: "show-all-breeds-template",
-      uri: "ui://show-all-breeds",
+      name: "all-breeds-view-template",
+      uri: "ui://all-breeds-view",
       title: "Show All Breeds Template",
       description: "A show all breeds UI",
       mimeType: "text/html+mcp",
@@ -78,7 +78,8 @@ const getServer = async () => {
     "show-random-dog-image",
     {
       title: "Show Dog Image",
-      description: "Show a dog image in an interactive UI widget. Do not show the image in the text response. The image will be shown in the UI widget.",
+      description:
+        "Show a dog image in an interactive UI widget. Do not show the image in the text response. The image will be shown in the UI widget.",
       inputSchema: {
         breed: z
           .string()
@@ -113,7 +114,7 @@ const getServer = async () => {
   );
 
   server.registerTool(
-    "show-all-breeds",
+    "all-breeds-view",
     {
       title: "Show All Breeds",
       description: "Show all breeds in an interactive UI widget.",
@@ -125,7 +126,9 @@ const getServer = async () => {
       try {
         const breeds = await fetchAllBreeds();
         return {
-          content: [{ type: "text" as const, text: JSON.stringify({ breeds }) }],
+          content: [
+            { type: "text" as const, text: JSON.stringify({ breeds }) },
+          ],
           structuredContent: { breeds },
         };
       } catch (error) {
