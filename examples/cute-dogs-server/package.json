@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "NODE_ENV=development npm run build && npm run server",
-    "build": "concurrently 'INPUT=show-dog-image.html vite build'",
+    "build": "concurrently 'INPUT=show-dog-image.html vite build' 'INPUT=show-all-breeds.html vite build'",
     "server": "bun server.ts"
   },
   "dependencies": {

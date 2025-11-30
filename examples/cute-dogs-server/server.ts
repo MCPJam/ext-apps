@@ -37,7 +37,7 @@ const getServer = async () => {
   );
 
   // Load HTML for both UIs
-  const [showDogImageHtml] = await Promise.all([loadHtml("show-dog-image")]);
+  const [showDogImageHtml, showAllBreedsHtml] = await Promise.all([loadHtml("show-dog-image"), loadHtml("show-all-breeds")]);
 
   const registerResource = (resource: Resource, htmlContent: string) => {
     server.registerResource(
@@ -57,87 +57,115 @@ const getServer = async () => {
     return resource;
   };
 
-  {
-    const randomDogResource = registerResource(
-      {
-        name: "show-dog-image-template",
-        uri: "ui://show-dog-image",
-        title: "Show Dog Image Template",
-        description: "A show dog image UI",
-        mimeType: "text/html+mcp",
+  const randomDogResource = registerResource(
+    {
+      name: "show-random-dog-image-template",
+      uri: "ui://show-random-dog-image",
+      title: "Show Dog Image Template",
+      description: "A show dog image UI",
+      mimeType: "text/html+mcp",
+    },
+    showDogImageHtml,
+  );
+
+  const showAllBreedsResource = registerResource(
+    {
+      name: "show-all-breeds-template",
+      uri: "ui://show-all-breeds",
+      title: "Show All Breeds Template",
+      description: "A show all breeds UI",
+      mimeType: "text/html+mcp",
+    },
+    showAllBreedsHtml,
+  );
+
+  server.registerTool(
+    "show-random-dog-image",
+    {
+      title: "Show Dog Image",
+      description: "Show a dog image in an interactive UI widget.",
+      inputSchema: {
+        breed: z
+          .string()
+          .optional()
+          .describe(
+            "Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed.",
+          ),
       },
-      showDogImageHtml,
-    );
-
-    server.registerTool(
-      "show-dog-image",
-      {
-        title: "Show Dog Image",
-        description:
-          "Show a dog image in an interactive UI widget.",
-        inputSchema: {
-          breed: z
-            .string()
-            .optional()
-            .describe(
-              "Optional dog breed (e.g., 'hound', 'retriever'). If not provided, returns a random dog from any breed.",
-            ),
-        },
-        _meta: {
-          [RESOURCE_URI_META_KEY]: randomDogResource.uri,
-        },
+      _meta: {
+        [RESOURCE_URI_META_KEY]: randomDogResource.uri,
       },
-      async ({ breed }): Promise<CallToolResult> => {
-        try {
-          let apiUrl: string;
-          if (breed) {
-            // Get random image from specific breed
-            apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random`;
-          } else {
-            // Get completely random dog image
-            apiUrl = "https://dog.ceo/api/breeds/image/random";
-          }
+    },
+    async ({ breed }): Promise<CallToolResult> => {
+      try {
+        let apiUrl: string;
+        if (breed) {
+          // Get random image from specific breed
+          apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random`;
+        } else {
+          // Get completely random dog image
+          apiUrl = "https://dog.ceo/api/breeds/image/random";
+        }
 
-          const response = await fetch(apiUrl);
-          const data = await response.json();
-          const dogBreed = data.message.split("/")[4];
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const dogBreed = data.message.split("/")[4];
 
-          if (data.status === "success" && data.message) {
-            return {
-              content: [{ type: "text", text: JSON.stringify(data) }],
-              structuredContent: {...data, breed: dogBreed},
-            };
-          } else {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify({
-                    error: "Failed to fetch dog image",
-                    status: data.status,
-                  }),
-                },
-              ],
-              isError: true,
-            };
-          }
-        } catch (error) {
+        if (data.status === "success" && data.message) {
+          return {
+            content: [{ type: "text", text: JSON.stringify(data) }],
+            structuredContent: { ...data, breed: dogBreed },
+          };
+        } else {
           return {
             content: [
               {
                 type: "text",
                 text: JSON.stringify({
-                  error:
-                    error instanceof Error ? error.message : "Unknown error",
+                  error: "Failed to fetch dog image",
+                  status: data.status,
                 }),
               },
             ],
             isError: true,
           };
         }
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error:
+                  error instanceof Error ? error.message : "Unknown error",
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "show-all-breeds",
+    {
+      title: "Show All Breeds",
+      description: "Show all breeds in an interactive UI widget.",
+      _meta: {
+        [RESOURCE_URI_META_KEY]: showAllBreedsResource.uri,
       },
-    );
-  }
+    },
+    async (): Promise<CallToolResult> => {
+      const response = await fetch("https://dog.ceo/api/breeds/list/all");
+      const data = await response.json();
+      const breeds = Object.keys(data.message);
+      return {
+        content: [{ type: "text", text: JSON.stringify({ breeds }) }],
+        structuredContent: { breeds },
+      };
+    },
+  );
 
   return server;
 };

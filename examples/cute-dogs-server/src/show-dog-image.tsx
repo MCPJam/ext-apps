@@ -4,7 +4,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { useApp } from "@modelcontextprotocol/ext-apps/react";
-import type { CallToolResult, Implementation } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolResult,
+  Implementation,
+} from "@modelcontextprotocol/sdk/types.js";
 
 const APP_INFO: Implementation = {
   name: "Show Dog Image App",
@@ -20,7 +23,10 @@ export function ShowDogImageApp() {
     capabilities: {},
     onAppCreated: (app) => {
       app.ontoolresult = async (toolResult) => {
-        const toolResultData = toolResult.structuredContent as { message: string, breed: string };
+        const toolResultData = toolResult.structuredContent as {
+          message: string;
+          breed: string;
+        };
         setDogImageUrl(toolResultData.message);
         setDogBreed(toolResultData.breed);
       };
