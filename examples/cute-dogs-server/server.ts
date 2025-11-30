@@ -169,6 +169,80 @@ const getServer = async () => {
     },
   );
 
+  server.registerTool(
+    "get-more-images",
+    {
+      title: "Get More Images",
+      description:
+        "Get multiple random dog images from a specific breed. Returns an array of image URLs.",
+      inputSchema: {
+        breed: z
+          .string()
+          .describe(
+            "The dog breed name (e.g., 'hound', 'retriever'). Required parameter.",
+          ),
+        count: z
+          .number()
+          .int()
+          .min(1)
+          .max(10)
+          .optional()
+          .default(3)
+          .describe(
+            "Number of images to fetch (1-10). Defaults to 3 if not provided.",
+          ),
+      },
+    },
+    async ({ breed, count = 3 }): Promise<CallToolResult> => {
+      try {
+        const apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random/${count}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.status === "success" && Array.isArray(data.message)) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ breed, images: data.message }),
+              },
+            ],
+            structuredContent: {
+              breed,
+              images: data.message,
+            },
+          };
+        } else {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  error: "Failed to fetch images",
+                  status: data.status,
+                  message: data.message,
+                }),
+              },
+            ],
+            isError: true,
+          };
+        }
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: error instanceof Error ? error.message : "Unknown error",
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+    },
+  );
+
   return server;
 };
 
