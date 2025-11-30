@@ -4,9 +4,7 @@
 import { useState, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import { useApp } from "@modelcontextprotocol/ext-apps/react";
-import type {
-  Implementation,
-} from "@modelcontextprotocol/sdk/types.js";
+import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
 
 const APP_INFO: Implementation = {
   name: "Show Dog Image App",
@@ -18,7 +16,8 @@ export function ShowDogImageApp() {
   const [dogBreed, setDogBreed] = useState<string | null>(null);
   const [moreImages, setMoreImages] = useState<string[]>([]);
   const [loadingMoreImages, setLoadingMoreImages] = useState<boolean>(false);
-  const [hasFetchedMoreImages, setHasFetchedMoreImages] = useState<boolean>(false);
+  const [hasFetchedMoreImages, setHasFetchedMoreImages] =
+    useState<boolean>(false);
   const [imageCount, setImageCount] = useState<number>(0);
 
   const { app } = useApp({

@@ -3,64 +3,54 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {
-  CallToolResult,
-  isInitializeRequest,
-  ReadResourceResult,
-  Resource,
-} from "@modelcontextprotocol/sdk/types.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { InMemoryEventStore } from "@modelcontextprotocol/sdk/examples/shared/inMemoryEventStore.js";
 import cors from "cors";
-import path from "node:path";
-import fs from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { RESOURCE_URI_META_KEY } from "@modelcontextprotocol/ext-apps";
+import {
+  loadHtml,
+  registerResource,
+  fetchRandomDogImage,
+  fetchAllBreeds,
+  fetchBreedImages,
+  createErrorResult,
+} from "./helpers.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// ============================================================================
+// Server Setup
+// ============================================================================
 
-// Load both UI HTML files from dist/
-const distDir = path.join(__dirname, "dist");
-const loadHtml = async (name: string) => {
-  const htmlPath = path.join(distDir, `${name}.html`);
-  return fs.readFile(htmlPath, "utf-8");
-};
-
-// Create an MCP server with both UI tools
+/**
+ * Create and configure the MCP server
+ */
 const getServer = async () => {
   const server = new McpServer(
     {
       name: "cute-dogs-mcp-server",
       version: "1.0.0",
+      icons: [
+        {
+          src: "https://dog.ceo/img/dog-api-logo.svg",
+          mimeType: "image/svg+xml",
+        },
+      ],
     },
-    { capabilities: { logging: {} } },
+    {
+      capabilities: { logging: {} },
+      instructions:
+        "This server shows images of dogs. View all dog breeds with the `show-all-breeds` tool and widget. The show-dog-image tool and widget shows the image. The show-dog-image widget can call the `get-more-images` tool to get more images of the same breed.",
+    },
   );
 
-  // Load HTML for both UIs
+  // Load HTML files
   const [showDogImageHtml, showAllBreedsHtml] = await Promise.all([
     loadHtml("show-dog-image"),
     loadHtml("show-all-breeds"),
   ]);
 
-  const registerResource = (resource: Resource, htmlContent: string) => {
-    server.registerResource(
-      resource.name,
-      resource.uri,
-      resource,
-      async (): Promise<ReadResourceResult> => ({
-        contents: [
-          {
-            uri: resource.uri,
-            mimeType: resource.mimeType,
-            text: htmlContent,
-          },
-        ],
-      }),
-    );
-    return resource;
-  };
-
+  // Register resources
   const randomDogResource = registerResource(
+    server,
     {
       name: "show-random-dog-image-template",
       uri: "ui://show-random-dog-image",
@@ -72,6 +62,7 @@ const getServer = async () => {
   );
 
   const showAllBreedsResource = registerResource(
+    server,
     {
       name: "show-all-breeds-template",
       uri: "ui://show-all-breeds",
@@ -82,11 +73,12 @@ const getServer = async () => {
     showAllBreedsHtml,
   );
 
+  // Register tools
   server.registerTool(
     "show-random-dog-image",
     {
       title: "Show Dog Image",
-      description: "Show a dog image in an interactive UI widget.",
+      description: "Show a dog image in an interactive UI widget. Do not show the image in the text response. The image will be shown in the UI widget.",
       inputSchema: {
         breed: z
           .string()
@@ -99,52 +91,23 @@ const getServer = async () => {
         [RESOURCE_URI_META_KEY]: randomDogResource.uri,
       },
     },
-    async ({ breed }): Promise<CallToolResult> => {
+    async ({ breed }) => {
       try {
-        let apiUrl: string;
-        if (breed) {
-          // Get random image from specific breed
-          apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random`;
-        } else {
-          // Get completely random dog image
-          apiUrl = "https://dog.ceo/api/breeds/image/random";
-        }
-
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        const dogBreed = data.message.split("/")[4];
-
-        if (data.status === "success" && data.message) {
-          return {
-            content: [{ type: "text", text: JSON.stringify(data) }],
-            structuredContent: { ...data, breed: dogBreed },
-          };
-        } else {
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  error: "Failed to fetch dog image",
-                  status: data.status,
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
-      } catch (error) {
+        const result = await fetchRandomDogImage(breed);
         return {
           content: [
             {
-              type: "text",
+              type: "text" as const,
               text: JSON.stringify({
-                error: error instanceof Error ? error.message : "Unknown error",
+                message: `Successfully fetched ${breed} image`,
+                status: "success",
               }),
             },
           ],
-          isError: true,
+          structuredContent: { ...result, status: "success" },
         };
+      } catch (error) {
+        return createErrorResult(error, "Failed to fetch dog image");
       }
     },
   );
@@ -158,14 +121,16 @@ const getServer = async () => {
         [RESOURCE_URI_META_KEY]: showAllBreedsResource.uri,
       },
     },
-    async (): Promise<CallToolResult> => {
-      const response = await fetch("https://dog.ceo/api/breeds/list/all");
-      const data = await response.json();
-      const breeds = Object.keys(data.message);
-      return {
-        content: [{ type: "text", text: JSON.stringify({ breeds }) }],
-        structuredContent: { breeds },
-      };
+    async () => {
+      try {
+        const breeds = await fetchAllBreeds();
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ breeds }) }],
+          structuredContent: { breeds },
+        };
+      } catch (error) {
+        return createErrorResult(error, "Failed to fetch breeds");
+      }
     },
   );
 
@@ -185,66 +150,38 @@ const getServer = async () => {
           .number()
           .int()
           .min(1)
-          .max(10)
+          .max(30)
           .optional()
           .default(3)
           .describe(
-            "Number of images to fetch (1-10). Defaults to 3 if not provided.",
+            "Number of images to fetch (1-30). Defaults to 3 if not provided.",
           ),
       },
     },
-    async ({ breed, count = 3 }): Promise<CallToolResult> => {
+    async ({ breed, count = 3 }) => {
       try {
-        const apiUrl = `https://dog.ceo/api/breed/${encodeURIComponent(breed)}/images/random/${count}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-
-        if (data.status === "success" && Array.isArray(data.message)) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({ breed, images: data.message }),
-              },
-            ],
-            structuredContent: {
-              breed,
-              images: data.message,
-            },
-          };
-        } else {
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  error: "Failed to fetch images",
-                  status: data.status,
-                  message: data.message,
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
-      } catch (error) {
+        const images = await fetchBreedImages(breed, count);
         return {
           content: [
             {
-              type: "text",
-              text: JSON.stringify({
-                error: error instanceof Error ? error.message : "Unknown error",
-              }),
+              type: "text" as const,
+              text: JSON.stringify({ breed, images }),
             },
           ],
-          isError: true,
+          structuredContent: { breed, images },
         };
+      } catch (error) {
+        return createErrorResult(error, "Failed to fetch images");
       }
     },
   );
 
   return server;
 };
+
+// ============================================================================
+// Express Server Setup
+// ============================================================================
 
 const MCP_PORT = process.env.MCP_PORT
   ? parseInt(process.env.MCP_PORT, 10)
