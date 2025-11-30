@@ -2,11 +2,14 @@
 
 An MCP (Model Context Protocol) server + MCP Apps UI that provides interactive widgets and tools for browsing and viewing dog images from the [Dog CEO API](https://dog.ceo/dog-api/).
 
-This example server demonstrates the full MCP Apps capabilities with a React example: 
+This example server demonstrates the full MCP Apps capabilities with a React example:
+
 - Render React UI widgets. The UI is hydrated by data passed in from the MCP tool via `structuredContent`
 - Call tool within widget
-- Send follow up message 
+- Send follow up message
 - Open external link
+
+![Example of the Cute Dogs MCP Server in action](demo-images/example.png)
 
 ## Installation
 
@@ -16,13 +19,13 @@ Install all dependencies:
 npm i
 ```
 
-Then start the server 
+Then start the server
 
 ```bash
 npm run start
 ```
 
-The terminal will then print out text `MCP Server listening on http://localhost:3001/mcp`. Connect to the MCP server with the localhost link. 
+The terminal will then print out text `MCP Server listening on http://localhost:3001/mcp`. Connect to the MCP server with the localhost link.
 
 ## Tools
 
@@ -33,11 +36,13 @@ The server provides three MCP tools:
 Shows a dog image in an interactive UI widget. The image is displayed in the widget, not in the text response.
 
 **Parameters:**
+
 - `breed` (optional): Dog breed name (e.g., `"hound"`, `"retriever"`). If not provided, returns a random dog from any breed.
 
 **Widget:** `dog-image-view`
 
 **Example:**
+
 ```json
 {
   "name": "show-random-dog-image",
@@ -56,6 +61,7 @@ Shows all available dog breeds in an interactive UI widget. Users can click on a
 **Widget:** `all-breeds-view`
 
 **Example:**
+
 ```json
 {
   "name": "all-breeds-view",
@@ -68,12 +74,14 @@ Shows all available dog breeds in an interactive UI widget. Users can click on a
 Fetches multiple random dog images from a specific breed. Returns an array of image URLs. This tool is typically called from within the `dog-image-view` widget to load additional images.
 
 **Parameters:**
+
 - `breed` (required): The dog breed name (e.g., `"hound"`, `"retriever"`)
 - `count` (optional): Number of images to fetch (1-30). Defaults to 3 if not provided.
 
 **Widget:** None (programmatic tool)
 
 **Example:**
+
 ```json
 {
   "name": "get-more-images",
